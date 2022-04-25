@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Send SAP Manually</title>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+		html {
+			scroll-behavior: smooth;
+		}
+		body {
+			margin: 0;
+		}
+		input, select, textarea {
+			width: 100%;
+			padding: 12px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			resize: vertical;
+		}
+		label {
+			padding: 12px 12px 12px 0;
+			display: inline-block;
+		}
+		button,button[type=submit] {
+			background-color: #04AA6D;
+			color: white;
+			padding: 12px 20px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			float: right;
+		}
+		button,button[type=submit]:hover {
+			background-color: #45a049;
+		}
+		.container {
+			border-radius: 5px;
+			background-color: #f2f2f2;
+			padding: 20px;
+		}
+		.col-25 {
+			float: left;
+			width: 25%;
+			margin-top: 6px;
+		}
+		.col-75 {
+			float: left;
+			width: 75%;
+			margin-top: 6px;
+		}
+		.row:after {
+			content: "";
+			display: table;
+			clear: both;
+		}
+		#status {
+			background-color: #04AA6D;
+			color: white;
+			padding: 12px 20px;
+			border: none;
+			border-radius: 4px;
+		}
+		.d-none {
+			display: none;
+		}
+		@media screen and (max-width: 600px) {
+			.col-25, .col-75, button[type=submit] {
+				width: 100%;
+				margin-top: 0;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<form action="/check" method="POST" id="form">
+			<div class="row">
+				<div class="col-25">
+					<label for="start">Waktu Mulai</label>
+				</div>
+				<div class="col-25">
+					<input type="date" name="start" id="start">
+				</div>
+				<div class="col-25">
+					<input type="time" name="timestart" id="timestart">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-25">
+					<label for="end">Waktu Selesai</label>
+				</div>
+				<div class="col-25">
+					<input type="date" name="end" id="end">
+				</div>
+				<div class="col-25">
+					<input type="time" name="timeend" id="timeend">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-75">
+					<button type="submit" id="submit">Kirim Data</button>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div class="row d-none" id="done">
+		<div class="col-25">
+			<pre id="status"></pre>
+		</div>
+		<div class="col-25">
+			<button onclick="closeApp()"> Tutup Aplikasi</button>
+		</div>
+	</div>
+	<script type="text/javascript">
+		const closeApp = () => {
+			window.location.href = "/close";
+		}
+		const sendData = (data) => {
+			fetch('/send', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			}).then((res) => {
+				return res.json();
+			}).then((ret) => {
+				console.log(ret);
+				document.getElementById('status').innerHTML = JSON.stringify(ret,null,4);
+				document.getElementById('done').classList.remove('d-none');
+			});
+		}
+		const checkData = (data) => {
+			fetch('/search', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			}).then((res) => {
+				return res.json();
+			}).then((ret) => {
+				if (ret.length > 0 && confirm('Data Sudah Terkirim, Ingin Mengirim Lagi?') == true) {
+					sendData(data);
+				} else {
+					sendData(data);
+				};
+			});
+		}
+		const form = document.getElementById('form');
+		const submit = document.getElementById('submit');
+		const start = document.getElementById('start');
+		const timestart = document.getElementById('timestart');
+		const end = document.getElementById('end');
+		const timeend = document.getElementById('timeend');
+		submit.addEventListener('click', (event) => {
+			event.preventDefault();
+			document.getElementById('status').innerHTML = '';
+			document.getElementById('done').classList.add('d-none');
+			if (start.value=='' || timestart.value=='' || end.value=='' || timeend.value=='') {
+				alert('Lengkapi Form');
+			} else {
+				checkData({
+					start: start.value+' '+timestart.value,
+					end: end.value+' '+timeend.value
+				});
+			}
+		});
+	</script>
+</body>
+</html>

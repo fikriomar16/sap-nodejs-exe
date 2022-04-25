@@ -1,0 +1,23 @@
+{
+	"name": "sap-smg",
+	"version": "1.0.0",
+	"description": "SAP for Indofood Semarang",
+	"main": "index.js",
+	"author": "fikriomar16",
+	"license": "MIT",
+	"bin": "index.js",
+	"pkg": {
+		"targets": ["node12-win-x64"],
+		"outputPath": "dist"
+	},
+	"assets": ["!ss/*","!README.md","sendsap.html"],
+	"scripts": {
+		"bundle": "pkg --compress GZip package.json"
+	},
+	"dependencies": {
+		"express": "^4.17.3",
+		"mssql": "^8.0.2",
+		"pg": "^8.7.3",
+		"pkg": "^5.5.2"
+	}
+}
