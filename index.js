@@ -10,19 +10,12 @@ const dir = './logsap/';
 
 const { Pool } = require('pg');
 const pool = new Pool({
-	user: 'postgres',
+	user: 'root',
 	host: '127.0.0.1',
-	database: 'postgres',
-	password: 'password',
-	port: 5432
+	database: 'biosecurity-boot',
+	password: 'ZKTeco##123',
+	port: 5442
 });
-// const pool = new Pool({
-// 	user: 'root',
-// 	host: '127.0.0.1',
-// 	database: 'biosecurity-boot',
-// 	password: 'ZKTeco##123',
-// 	port: 5442
-// });
 
 const {Connection,Request} = require('tedious');
 const DB_SAP = 'HITFPTA';
@@ -32,8 +25,8 @@ const SCHtable = 'HRPT63';
 
 const conf_sqlsrv = (database) => {
 	return {
-		// server: "10.126.25.151",
-		server: "192.168.1.9",
+		server: "10.126.25.151",
+		// server: "192.168.1.9",
 		authentication: {
 			type: 'default',
 			options: {
@@ -91,10 +84,8 @@ const send0010 = {
 	end: `${today} 10:00:00`
 }
 let whereCond = {
-	// start: `2022-04-22 00:00:00`,
-	// end: `2022-04-22 10:00:00`
-	start: `2022-02-04 00:00:00`,
-	end: `2022-02-04 10:00:00`
+	start: `2022-04-22 00:00:00`,
+	end: `2022-04-22 10:00:00`
 }
 
 const qSch = `SELECT * FROM ${SCHtable} WHERE CAST(DATE as date)='${today}' AND LEFT(DWS,3) != 'OFF'`;
