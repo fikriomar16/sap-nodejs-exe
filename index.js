@@ -100,7 +100,7 @@ const query_ = (start,end) => {
 	NULL as f07, NULL as f08, NULL as f09, 
 	RIGHT(dev_sn,4) as f10,  
 	NULL as crtdt, NULL as flag
-	FROM acc_transaction where split_part(dev_alias, '-', 1)='IN' and pin!= '' and event_time >= '${start}' and event_time <= '${end}'
+	FROM acc_transaction where split_part(dev_alias, '-', 1)='IN' and pin!= '' and event_time >= '${start}' and event_time <= '${end}' and verify_mode_no != 4
 	GROUP BY pin,name,dev_sn
 	UNION ALL
 	SELECT name as ID, pin as f01, 
@@ -112,7 +112,7 @@ const query_ = (start,end) => {
 	NULL as f07, NULL as f08, NULL as f09, 
 	RIGHT(dev_sn,4) as f10, 
 	NULL as crtdt, NULL as flag
-	FROM acc_transaction where split_part(dev_alias, '-', 1)='OUT' and pin != '' and event_time >= '${start}' and event_time <= '${end}'
+	FROM acc_transaction where split_part(dev_alias, '-', 1)='OUT' and pin != '' and event_time >= '${start}' and event_time <= '${end}' and verify_mode_no != 4
 	GROUP BY pin,name,dev_sn
 	UNION ALL
 	SELECT name as ID, pin as f01, 
