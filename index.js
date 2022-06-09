@@ -84,9 +84,16 @@ const send0010 = {
 	end: `${today} 10:00:00`
 }
 let whereCond = {
-	start: `2022-04-22 00:00:00`,
-	end: `2022-04-22 10:00:00`
+	start: `2022-02-08 10:00:00`,
+	end: `2022-02-09 00:00:00`
 }
+
+const createLogFolder = () => {
+	if (!fs.existsSync(dir)){
+		fs.mkdirSync(dir);
+	}
+}
+// createLogFolder();
 
 const qSch = `SELECT * FROM ${SCHtable} WHERE CAST(DATE as date)='${today}' AND LEFT(DWS,3) != 'OFF'`;
 const query_ = (start,end) => {
@@ -102,7 +109,7 @@ const query_ = (start,end) => {
 	NULL as crtdt, NULL as flag
 	FROM acc_transaction where split_part(dev_alias, '-', 1)='IN' and pin!= '' and event_time >= '${start}' and event_time <= '${end}' and verify_mode_no != 4
 	GROUP BY pin,name,dev_sn
-	UNION ALL
+	UNION
 	SELECT name as ID, pin as f01, 
 	date_part('year',MAX(event_time)) as f02, 
 	date_part('month',MAX(event_time)) as f03, 
@@ -114,7 +121,7 @@ const query_ = (start,end) => {
 	NULL as crtdt, NULL as flag
 	FROM acc_transaction where split_part(dev_alias, '-', 1)='OUT' and pin != '' and event_time >= '${start}' and event_time <= '${end}' and verify_mode_no != 4
 	GROUP BY pin,name,dev_sn
-	UNION ALL
+	UNION
 	SELECT name as ID, pin as f01, 
 	date_part('year',MIN(event_time)) as f02, 
 	date_part('month',MIN(event_time)) as f03, 
@@ -126,7 +133,7 @@ const query_ = (start,end) => {
 	NULL as crtdt, NULL as flag
 	FROM acc_transaction where dev_alias in ('Office','Poliklinik') and pin!= '' and event_time >= '${start}' and event_time <= '${end}'
 	GROUP BY pin,name,dev_sn
-	UNION ALL
+	UNION
 	SELECT name as ID, pin as f01, 
 	date_part('year',MAX(event_time)) as f02, 
 	date_part('month',MAX(event_time)) as f03, 
@@ -138,7 +145,7 @@ const query_ = (start,end) => {
 	NULL as crtdt, NULL as flag
 	FROM acc_transaction where dev_alias in ('Office','Poliklinik') and pin != '' and event_time >= '${start}' and event_time <= '${end}'
 	GROUP BY pin,name,dev_sn
-	ORDER BY f05 asc
+	ORDER BY f02 asc,f03 asc,f04 asc,f05 asc, f06 asc
 	`;
 }
 
@@ -146,7 +153,7 @@ const zeroPadding = str => {
 	if (String(str).length < 2) {
 		return `0${str}`;
 	}
-	return str;
+	return String(str);
 }
 
 const getData = async (start,end,response = 0,closeServer = 1) => {
@@ -154,16 +161,11 @@ const getData = async (start,end,response = 0,closeServer = 1) => {
 	await pool.query(query_(start,end), (error, results) => {
 		if (error) throw error;
 		if (results.rows.length > 0) {
+			const dataSend = [];
 			const toInsert = results.rows;
-			// fs.writeFile(`${dir}log_sap_get_${start}_${end}.txt`,JSON.stringify(toInsert,null,4), err => {
-			// 	if (err) {
-			// 		console.log(err);
-			// 	} else {
-			// 		console.log(`[SAVED] Log Data for Getting SAP Saved........!!`);
-			// 	}
-			// });
 			console.log(`[SENDING] Sending Data [${results.rows.length} row(s)]........`);
 			let SAPtoSent = '';
+			const logGET = [];
 			toInsert.map((row,idx) => {
 				if (row.f01.length < 8) {
 					let zero = ``,i = row.f01.length;
@@ -172,12 +174,69 @@ const getData = async (start,end,response = 0,closeServer = 1) => {
 					}
 					row.f01 = `${zero}${row.f01}`;
 				}
-				SAPtoSent+= `INSERT INTO ${SAPtable} (ID,f01,f02,f03,f04,f05,f06,f07,f08,f09,f10,crtdt,flag) VALUES ('${row.id}','${row.f01}','${row.f02}','${zeroPadding(row.f03)}','${zeroPadding(row.f04)}','${zeroPadding(row.f05)}','${zeroPadding(row.f06)}',NULL,NULL,NULL,'${row.f10}',NULL,NULL);\n`;
-				// SAPtoSent+= `('${row.id}','${row.f01}','${row.f02}','${zeroPadding(row.f03)}','${zeroPadding(row.f04)}','${zeroPadding(row.f05)}','${zeroPadding(row.f06)}',NULL,NULL,NULL,'${row.f10}',NULL,NULL)`;
-				// if (idx != toInsert.length - 1) {
-				// 	SAPtoSent+=',';
-				// }
+				row.f03 = zeroPadding(row.f03);
+				row.f04 = zeroPadding(row.f04);
+				row.f05 = zeroPadding(row.f05);
+				row.f06 = zeroPadding(row.f06);
 			});
+			toInsert.forEach((row,idx) => {
+				const rowSAP = {
+					ID: row.id,
+					f01: row.f01,
+					f02: row.f02,
+					f03: row.f03,
+					f04: row.f04,
+					f05: row.f05,
+					f06: row.f06,
+					f07: `NULL`,
+					f08: `NULL`,
+					f09: `NULL`,
+					f10: row.f10,
+					f11: `NULL`,
+					f12: `NULL`
+				};
+				const searchData = logGET.find(obj => obj.nik == row.f01);
+				if (!searchData) {
+					logGET.push({nik:row.f01, row:[rowSAP]});
+				} else {
+					logGET.map(brs => {
+						if (brs.nik == row.f01) {
+							if (brs.row.length < 2) {
+								brs.row.push(rowSAP);
+							} else {
+								brs.row.pop();
+								brs.row.push(rowSAP);
+							}
+						}
+					});
+				}
+			});
+			logGET.forEach(dataSAP => {
+				dataSAP.row.forEach(row => {
+					SAPtoSent+= `INSERT INTO ${SAPtable} (ID,f01,f02,f03,f04,f05,f06,f07,f08,f09,f10,crtdt,flag) VALUES ('${row.ID}','${row.f01}','${row.f02}','${row.f03}','${row.f04}','${row.f05}','${row.f06}',NULL,NULL,NULL,'${row.f10}',NULL,NULL);\n`;
+				})
+			});
+			// fs.writeFile(`${dir}log_sap_get_${start}_${end}.txt`,JSON.stringify(toInsert,null,2), err => {
+			// 	if (err) {
+			// 		console.log(err);
+			// 	} else {
+			// 		console.log(`[SAVED] Log Data for Getting SAP Saved........!!`);
+			// 	}
+			// });
+			// fs.writeFile(`${dir}log_sap_sent_${start}_${end}_logGET.txt`,JSON.stringify(logGET,null,2), err => {
+			// 	if (err) {
+			// 		console.log(err);
+			// 	} else {
+			// 		console.log(`[SAVED] Log Data for Log Filter SAP Saved........!!`);
+			// 	}
+			// });
+			// fs.writeFile(`${dir}log_sap_sent_${start}_${end}_sent.txt`,SAPtoSent, err => {
+			// 	if (err) {
+			// 		console.log(err);
+			// 	} else {
+			// 		console.log(`[SAVED] Log Data for Sent SAP Saved........!!`);
+			// 	}
+			// });
 			const connection = new Connection(conf_sqlsrv(DB_SAP));
 			connection.connect();
 			connection.on('connect', (err) => {
@@ -367,12 +426,6 @@ const downloadSCH = async () => {
 			connection.execSql(req_);
 		}
 	});
-}
-
-const createLogFolder = () => {
-	if (!fs.existsSync(dir)){
-		fs.mkdirSync(dir);
-	}
 }
 
 if (argv.send || argv.schedule) {
