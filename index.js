@@ -161,11 +161,11 @@ const getData = async (start,end,response = 0,closeServer = 1) => {
 	await pool.query(query_(start,end), (error, results) => {
 		if (error) throw error;
 		if (results.rows.length > 0) {
-			const dataSend = [];
+			let dataSent = 0;
 			const toInsert = results.rows;
-			console.log(`[SENDING] Sending Data [${results.rows.length} row(s)]........`);
 			let SAPtoSent = '';
 			const logGET = [];
+			console.log(`[SENDING] Sending Data [${results.rows.length} row(s)]........`);
 			toInsert.map((row,idx) => {
 				if (row.f01.length < 8) {
 					let zero = ``,i = row.f01.length;
@@ -214,6 +214,7 @@ const getData = async (start,end,response = 0,closeServer = 1) => {
 			logGET.forEach(dataSAP => {
 				dataSAP.row.forEach(row => {
 					SAPtoSent+= `INSERT INTO ${SAPtable} (ID,f01,f02,f03,f04,f05,f06,f07,f08,f09,f10,crtdt,flag) VALUES ('${row.ID}','${row.f01}','${row.f02}','${row.f03}','${row.f04}','${row.f05}','${row.f06}',NULL,NULL,NULL,'${row.f10}',NULL,NULL);\n`;
+					dataSent++;
 				})
 			});
 			// fs.writeFile(`${dir}log_sap_get_${start}_${end}.txt`,JSON.stringify(toInsert,null,2), err => {
@@ -223,7 +224,7 @@ const getData = async (start,end,response = 0,closeServer = 1) => {
 			// 		console.log(`[SAVED] Log Data for Getting SAP Saved........!!`);
 			// 	}
 			// });
-			// fs.writeFile(`${dir}log_sap_sent_${start}_${end}_logGET.txt`,JSON.stringify(logGET,null,2), err => {
+			// fs.writeFile(`${dir}log_sap_filter_${start}_${end}_logGET.txt`,JSON.stringify(logGET,null,2), err => {
 			// 	if (err) {
 			// 		console.log(err);
 			// 	} else {
@@ -254,14 +255,7 @@ const getData = async (start,end,response = 0,closeServer = 1) => {
 						if (error) {
 							console.log(error);
 						} else {
-							// fs.writeFile(`${dir}log_sap_sent_${start}_${end}.txt`,SAPtoSent, err => {
-							// 	if (err) {
-							// 		console.log(err);
-							// 	} else {
-							// 		console.log(`[SAVED] Log Data for Sending SAP Saved........!!`);
-							// 	}
-							// });
-							console.log(`[DONE] ${rowCount} row(s) inserted`);
+							console.log(`[DONE] ${dataSent} row(s) inserted`);
 							console.log(`[DONE] SAP SENT!!`);
 							sap_status = {message:"SAP SENT!!"};
 						}
