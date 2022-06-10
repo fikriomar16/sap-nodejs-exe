@@ -383,6 +383,9 @@ const downloadSCH = async () => {
 					if (row.pin[0] == '0') {
 						pin = row.pin.slice(1);
 					}
+					if (pin[0] == '0') {
+						pin = pin.slice(1);
+					}
 					pool.query(`SELECT * FROM sys_sch_users WHERE nik='${pin}' and masuk='${dwsin}' and pulang='${dwsout}' limit 1`, (error, results) => {
 						if (error) throw error;
 						if (results.rows.length > 0) {
