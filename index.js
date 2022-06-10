@@ -165,7 +165,7 @@ const getData = async (start,end,response = 0,closeServer = 1) => {
 			const toInsert = results.rows;
 			let SAPtoSent = '';
 			const logGET = [];
-			console.log(`[SENDING] Sending Data [${results.rows.length} row(s)]........`);
+			console.log(`[PROCESS] Processing Data [from ${results.rows.length} row(s)]........`);
 			toInsert.map((row,idx) => {
 				if (row.f01.length < 8) {
 					let zero = ``,i = row.f01.length;
