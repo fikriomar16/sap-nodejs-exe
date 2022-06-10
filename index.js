@@ -379,13 +379,7 @@ const downloadSCH = async () => {
 					}
 					[tmpSubpY,tmpSubpM,tmpSubpD,tmpSubpH,tmpSubpI,tmpSubpS] = [tmp_end.getFullYear(),tmp_end.getMonth()+1,tmp_end.getDate(),tmp_end.getHours()+maxPulang,tmp_end.getMinutes(),tmp_end.getSeconds()];
 					[subMasuk,subPulang] = [`${tmpSubmY}-${tmpSubmM}-${tmpSubmD} ${tmpSubmH}:${tmpSubmI}:${tmpSubmS}`,`${tmpSubpY}-${tmpSubpM}-${tmpSubpD} ${tmpSubpH}:${tmpSubpI}:${tmpSubpS}`];
-					let pin = row.pin;
-					if (row.pin[0] == '0') {
-						pin = row.pin.slice(1);
-					}
-					if (pin[0] == '0') {
-						pin = pin.slice(1);
-					}
+					let pin = +row.pin;
 					pool.query(`SELECT * FROM sys_sch_users WHERE nik='${pin}' and masuk='${dwsin}' and pulang='${dwsout}' limit 1`, (error, results) => {
 						if (error) throw error;
 						if (results.rows.length > 0) {
